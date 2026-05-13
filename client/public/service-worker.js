@@ -2,7 +2,6 @@ const CACHE_NAME = 'smart-city-cms-v1';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
-  '/static/js/bundle.js',
   '/manifest.json',
 ];
 
@@ -27,6 +26,8 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // Only handle http and https requests — skip chrome-extension and others
+  if (!event.request.url.startsWith('http')) return;
   if (event.request.method !== 'GET') return;
   if (event.request.url.includes('/api/')) return;
 
@@ -34,30 +35,22 @@ self.addEventListener('fetch', (event) => {
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
       return fetch(event.request).then((response) => {
-        if (!response || response.status !== 200 || response.type !== 'basic') {
+        if (
+          !response ||
+          response.status !== 200 ||
+          response.type !== 'basic'
+        ) {
           return response;
         }
         const clone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        caches.open(CACHE_NAME).then((cache) => {
+          // Only cache http/https requests
+          if (event.request.url.startsWith('http')) {
+            cache.put(event.request, clone);
+          }
+        });
         return response;
       }).catch(() => caches.match('/index.html'));
     })
   );
-});
-
-self.addEventListener('push', (event) => {
-  const data = event.data?.json() || {};
-  event.waitUntil(
-    self.registration.showNotification(data.title || 'Smart City CMS', {
-      body: data.body || 'Your complaint status has been updated',
-      icon: '/logo192.png',
-      badge: '/logo192.png',
-      data: data.url || '/',
-    })
-  );
-});
-
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-  event.waitUntil(clients.openWindow(event.notification.data));
 });

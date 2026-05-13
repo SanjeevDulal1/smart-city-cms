@@ -12,16 +12,12 @@ const generateToken = (id, type) => {
 const registerUser = async (req, res) => {
   try {
     const { name, email, password, phone } = req.body;
-
     const existing = await User.findOne({ email });
     if (existing) {
       return res.status(400).json({ success: false, message: 'Email already registered.' });
     }
-
     const user = await User.create({ name, email, password, phone });
-
     await sendOTP(email, 'email_verification');
-
     res.status(201).json({
       success: true,
       message: 'Account created. Please verify your email with the OTP sent.',
@@ -49,9 +45,18 @@ const verifyEmail = async (req, res) => {
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email }).select('+password');
 
-    if (!user || !(await user.comparePassword(password))) {
+    const user = await User.findOne({ email }).select('+password');
+   
+
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Invalid email or password.' });
+    }
+
+    const isMatch = await user.comparePassword(password);
+    
+
+    if (!isMatch) {
       return res.status(401).json({ success: false, message: 'Invalid email or password.' });
     }
 
@@ -65,15 +70,17 @@ const loginUser = async (req, res) => {
     }
 
     const token = generateToken(user._id, 'user');
+    
+
     res.json({
       success: true,
       token,
       user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        totalComplaints: user.totalComplaints,
+        id:               user._id,
+        name:             user.name,
+        email:            user.email,
+        phone:            user.phone,
+        totalComplaints:  user.totalComplaints,
       },
     });
   } catch (error) {
@@ -84,24 +91,36 @@ const loginUser = async (req, res) => {
 const loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const admin = await Admin.findOne({ email, isActive: true }).select('+password').populate('ward');
+    
 
-    if (!admin || !(await admin.comparePassword(password))) {
+    const admin = await Admin.findOne({ email, isActive: true })
+      .select('+password')
+      .populate('ward');
+
+    
+    if (!admin) {
+      return res.status(401).json({ success: false, message: 'Invalid credentials.' });
+    }
+
+    const isMatch = await admin.comparePassword(password);
+    
+    if (!isMatch) {
       return res.status(401).json({ success: false, message: 'Invalid credentials.' });
     }
 
     await Admin.findByIdAndUpdate(admin._id, { lastLogin: new Date() });
 
     const token = generateToken(admin._id, 'admin');
+    
     res.json({
       success: true,
       token,
       admin: {
-        id: admin._id,
-        name: admin.name,
+        id:    admin._id,
+        name:  admin.name,
         email: admin.email,
-        role: admin.role,
-        ward: admin.ward,
+        role:  admin.role,
+        ward:  admin.ward,
       },
     });
   } catch (error) {

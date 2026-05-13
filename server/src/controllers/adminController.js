@@ -1,30 +1,21 @@
 const Admin = require('../models/Admin');
 const Complaint = require('../models/Complaint');
 const Ward = require('../models/Ward');
-const { calculatePriority } = require('../services/priorityEngine');
 
 const createWardAdmin = async (req, res) => {
   try {
     const { name, email, password, wardId } = req.body;
-
     const existing = await Admin.findOne({ email });
     if (existing) {
       return res.status(400).json({ success: false, message: 'Admin with this email already exists.' });
     }
-
     const ward = await Ward.findById(wardId);
     if (!ward) {
       return res.status(404).json({ success: false, message: 'Ward not found.' });
     }
-
     const admin = await Admin.create({
-      name,
-      email,
-      password,
-      role: 'ward_admin',
-      ward: wardId,
+      name, email, password, role: 'ward_admin', ward: wardId,
     });
-
     res.status(201).json({
       success: true,
       message: 'Ward admin created successfully.',
@@ -37,6 +28,7 @@ const createWardAdmin = async (req, res) => {
 
 const getAllAdmins = async (req, res) => {
   try {
+    // Get ALL ward admins regardless of isActive status
     const admins = await Admin.find({ role: 'ward_admin' })
       .populate('ward', 'name wardNumber')
       .select('-password')
@@ -47,39 +39,72 @@ const getAllAdmins = async (req, res) => {
   }
 };
 
+const updateWardAdmin = async (req, res) => {
+  try {
+    const admin = await Admin.findById(req.params.id);
+    if (!admin) {
+      return res.status(404).json({ success: false, message: 'Admin not found.' });
+    }
+    if (admin.role === 'super_admin') {
+      return res.status(403).json({ success: false, message: 'Cannot modify super admin.' });
+    }
+    const { name, email, wardId, isActive, password } = req.body;
+    if (name)                          admin.name     = name;
+    if (email)                         admin.email    = email;
+    if (wardId)                        admin.ward     = wardId;
+    if (typeof isActive === 'boolean') admin.isActive = isActive;
+    if (password && password.length >= 8) admin.password = password;
+    await admin.save();
+    const updated = await Admin.findById(admin._id)
+      .populate('ward', 'name wardNumber')
+      .select('-password');
+    res.json({ success: true, message: 'Admin updated successfully.', admin: updated });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const deleteWardAdmin = async (req, res) => {
+  try {
+    const admin = await Admin.findById(req.params.id);
+    if (!admin) {
+      return res.status(404).json({ success: false, message: 'Admin not found.' });
+    }
+    if (admin.role === 'super_admin') {
+      return res.status(403).json({ success: false, message: 'Cannot delete super admin.' });
+    }
+    await Admin.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: 'Ward admin deleted successfully.' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 const getWardComplaints = async (req, res) => {
   try {
     const wardId = req.admin.role === 'super_admin'
       ? req.query.wardId
       : req.admin.ward._id;
-
     if (!wardId) {
       return res.status(400).json({ success: false, message: 'Ward ID required.' });
     }
-
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
-    const skip = (page - 1) * limit;
+    const page   = parseInt(req.query.page)  || 1;
+    const limit  = parseInt(req.query.limit) || 20;
+    const skip   = (page - 1) * limit;
     const { status, category } = req.query;
-
     const filter = { ward: wardId };
-    if (status) filter.status = status;
+    if (status)   filter.status   = status;
     if (category) filter.category = category;
-
     const [complaints, total] = await Promise.all([
       Complaint.find(filter)
         .populate('user', 'name email phone')
         .populate('ward', 'name wardNumber')
         .sort({ 'priority.score': -1, createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
+        .skip(skip).limit(limit).lean(),
       Complaint.countDocuments(filter),
     ]);
-
     res.json({
-      success: true,
-      complaints,
+      success: true, complaints,
       pagination: { page, limit, total, pages: Math.ceil(total / limit) },
     });
   } catch (error) {
@@ -90,31 +115,40 @@ const getWardComplaints = async (req, res) => {
 const updateComplaintStatus = async (req, res) => {
   try {
     const { status, note } = req.body;
-    const complaint = await Complaint.findById(req.params.id);
-
+    const complaint = await Complaint.findById(req.params.id)
+      .populate('user', 'name email');
     if (!complaint) {
       return res.status(404).json({ success: false, message: 'Complaint not found.' });
     }
-
     if (req.admin.role === 'ward_admin') {
       const adminWardId = req.admin.ward._id.toString();
       if (complaint.ward.toString() !== adminWardId) {
-        return res.status(403).json({ success: false, message: 'You can only manage your own ward complaints.' });
+        return res.status(403).json({
+          success: false,
+          message: 'You can only manage your own ward complaints.',
+        });
       }
     }
-
+    const oldStatus = complaint.status;
     complaint.status = status;
     complaint.statusHistory.push({
-      status,
-      changedBy: req.admin._id,
-      note: note || '',
+      status, changedBy: req.admin._id, note: note || '',
     });
-
     if (note) complaint.adminNote = note;
-
     await complaint.save();
-
-    res.json({ success: true, message: 'Status updated.', complaint });
+    if (complaint.user?.email) {
+      const { sendStatusUpdateEmail } = require('../services/emailService');
+      sendStatusUpdateEmail({
+        userName:       complaint.user.name,
+        userEmail:      complaint.user.email,
+        complaintTitle: complaint.title,
+        oldStatus,
+        newStatus:      status,
+        adminNote:      note || '',
+        complaintId:    complaint._id,
+      }).catch((err) => console.error('Status email failed:', err));
+    }
+    res.json({ success: true, message: 'Status updated and user notified.', complaint });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -122,29 +156,23 @@ const updateComplaintStatus = async (req, res) => {
 
 const getDashboardStats = async (req, res) => {
   try {
-    const isSuper = req.admin.role === 'super_admin';
+    const isSuper    = req.admin.role === 'super_admin';
     const wardFilter = isSuper ? {} : { ward: req.admin.ward._id };
-
     const [total, pending, inProgress, resolved, rejected, wards] = await Promise.all([
       Complaint.countDocuments(wardFilter),
-      Complaint.countDocuments({ ...wardFilter, status: 'pending' }),
+      Complaint.countDocuments({ ...wardFilter, status: 'pending'     }),
       Complaint.countDocuments({ ...wardFilter, status: 'in_progress' }),
-      Complaint.countDocuments({ ...wardFilter, status: 'resolved' }),
-      Complaint.countDocuments({ ...wardFilter, status: 'rejected' }),
+      Complaint.countDocuments({ ...wardFilter, status: 'resolved'    }),
+      Complaint.countDocuments({ ...wardFilter, status: 'rejected'    }),
       isSuper ? Ward.countDocuments({ isActive: true }) : Promise.resolve(null),
     ]);
-
     const topComplaints = await Complaint.find({
-      ...wardFilter,
-      status: { $nin: ['resolved', 'rejected'] },
+      ...wardFilter, status: { $nin: ['resolved', 'rejected'] },
     })
-      .sort({ 'priority.score': -1 })
-      .limit(5)
-      .populate('ward', 'name')
-      .populate('user', 'name')
+      .sort({ 'priority.score': -1 }).limit(5)
+      .populate('ward', 'name').populate('user', 'name')
       .select('title category status priority.score createdAt')
       .lean();
-
     res.json({
       success: true,
       stats: { total, pending, inProgress, resolved, rejected, wards },
@@ -157,30 +185,24 @@ const getDashboardStats = async (req, res) => {
 
 const getAllComplaintsSuper = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
+    const page  = parseInt(req.query.page)  || 1;
     const limit = parseInt(req.query.limit) || 20;
-    const skip = (page - 1) * limit;
+    const skip  = (page - 1) * limit;
     const { status, category, wardId } = req.query;
-
     const filter = {};
-    if (status) filter.status = status;
+    if (status)   filter.status   = status;
     if (category) filter.category = category;
-    if (wardId) filter.ward = wardId;
-
+    if (wardId)   filter.ward     = wardId;
     const [complaints, total] = await Promise.all([
       Complaint.find(filter)
         .populate('user', 'name email')
         .populate('ward', 'name wardNumber')
         .sort({ 'priority.score': -1, createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
+        .skip(skip).limit(limit).lean(),
       Complaint.countDocuments(filter),
     ]);
-
     res.json({
-      success: true,
-      complaints,
+      success: true, complaints,
       pagination: { page, limit, total, pages: Math.ceil(total / limit) },
     });
   } catch (error) {
@@ -189,10 +211,7 @@ const getAllComplaintsSuper = async (req, res) => {
 };
 
 module.exports = {
-  createWardAdmin,
-  getAllAdmins,
-  getWardComplaints,
-  updateComplaintStatus,
-  getDashboardStats,
-  getAllComplaintsSuper,
+  createWardAdmin, getAllAdmins, updateWardAdmin, deleteWardAdmin,
+  getWardComplaints, updateComplaintStatus,
+  getDashboardStats, getAllComplaintsSuper,
 };

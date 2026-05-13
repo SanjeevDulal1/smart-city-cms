@@ -11,10 +11,20 @@ root.render(
 );
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker
-      .register('/service-worker.js')
-      .then((reg) => console.log('Service worker registered:', reg.scope))
-      .catch((err) => console.log('Service worker failed:', err));
-  });
+  if (process.env.NODE_ENV === 'production') {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker
+        .register('/service-worker.js')
+        .then((reg) => console.log('Service worker registered:', reg.scope))
+        .catch((err) => console.log('Service worker failed:', err));
+    });
+  } else {
+    // Unregister all service workers in development
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      registrations.forEach((reg) => {
+        reg.unregister();
+        console.log('Service worker unregistered for development');
+      });
+    });
+  }
 }

@@ -8,17 +8,22 @@ import LoadingSpinner from '../components/UI/LoadingSpinner';
 import { getCategoryInfo, timeAgo, priorityLabel } from '../utils/helpers';
 
 const CATEGORY_EMOJIS = {
-  live_wire:'⚡',gas_leak:'💨',road_collapse:'🛣️',sewage_overflow:'🚰',
-  flood:'🌊',pothole:'🕳️',broken_light:'💡',garbage:'🗑️',
-  broken_footpath:'🚶',noise:'🔊',other:'📌',
+  live_wire:'⚡', gas_leak:'💨', road_collapse:'🛣️', sewage_overflow:'🚰',
+  flood:'🌊', pothole:'🕳️', broken_light:'💡', garbage:'🗑️',
+  broken_footpath:'🚶', noise:'🔊', other:'📌',
+};
+
+const getImageUrl = (url) => {
+  const base = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000';
+  return `${base}${url}`;
 };
 
 const DashboardPage = () => {
   const { myComplaints, fetchMyComplaints, loading } = useComplaintStore();
   const { user } = useAuthStore();
 
- // eslint-disable-next-line react-hooks/exhaustive-deps
-useEffect(() => { fetchMyComplaints(); }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchMyComplaints(); }, []);
 
   const stats = {
     total:    myComplaints.length,
@@ -32,7 +37,7 @@ useEffect(() => { fetchMyComplaints(); }, []);
       <div className="max-w-4xl mx-auto px-4">
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-8 flex-wrap gap-3">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">My reports</h1>
             <p className="text-gray-500 mt-1">Welcome back, {user?.name?.split(' ')[0]}</p>
@@ -45,10 +50,10 @@ useEffect(() => { fetchMyComplaints(); }, []);
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
           {[
-            { label: 'Total',      value: stats.total,    icon: FileText,       color: 'bg-blue-50 text-blue-600'     },
-            { label: 'Pending',    value: stats.pending,  icon: Clock,          color: 'bg-amber-50 text-amber-600'   },
-            { label: 'In progress',value: stats.progress, icon: AlertTriangle,  color: 'bg-indigo-50 text-indigo-600' },
-            { label: 'Resolved',   value: stats.resolved, icon: CheckCircle,    color: 'bg-green-50 text-green-600'   },
+            { label: 'Total',       value: stats.total,    icon: FileText,       color: 'bg-blue-50 text-blue-600'     },
+            { label: 'Pending',     value: stats.pending,  icon: Clock,          color: 'bg-amber-50 text-amber-600'   },
+            { label: 'In progress', value: stats.progress, icon: AlertTriangle,  color: 'bg-indigo-50 text-indigo-600' },
+            { label: 'Resolved',    value: stats.resolved, icon: CheckCircle,    color: 'bg-green-50 text-green-600'   },
           ].map((s) => (
             <div key={s.label} className="card p-4 flex items-center gap-3">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${s.color}`}>
@@ -89,19 +94,26 @@ useEffect(() => { fetchMyComplaints(); }, []);
             const pLabel = priorityLabel(c.priority?.score || 0);
 
             return (
-              <div key={c._id} className="card p-5 hover:shadow-md transition-all">
+              <Link
+                key={c._id}
+                to={`/complaint/${c._id}`}
+                className="card p-5 hover:shadow-md transition-all block">
                 <div className="flex items-start gap-4">
                   <div className="text-3xl flex-shrink-0">{emoji}</div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-3 flex-wrap">
                       <div>
                         <h3 className="font-semibold text-gray-900">{c.title}</h3>
-                        <p className="text-sm text-gray-500 mt-0.5">{cat.label} · {timeAgo(c.createdAt)}</p>
+                        <p className="text-sm text-gray-500 mt-0.5">
+                          {cat.label} · {timeAgo(c.createdAt)}
+                        </p>
                       </div>
                       <StatusBadge status={c.status} />
                     </div>
 
-                    <p className="text-sm text-gray-600 mt-2 line-clamp-2">{c.description}</p>
+                    <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                      {c.description}
+                    </p>
 
                     <div className="flex items-center gap-4 mt-3 flex-wrap">
                       {c.ward && (
@@ -127,20 +139,25 @@ useEffect(() => { fetchMyComplaints(); }, []);
                       </div>
                     )}
 
+                    {/* ── Photos ── */}
                     {c.photos?.length > 0 && (
                       <div className="flex gap-2 mt-3">
                         {c.photos.map((p, i) => (
-                          <img key={i}
-                            src={`http://localhost:5000${p.url}`}
-                            alt=""
+                          <img
+                            key={i}
+                            src={getImageUrl(p.url)}
+                            alt={`Complaint evidence ${i + 1}`}
                             className="w-16 h-16 object-cover rounded-lg border border-gray-100"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                            }}
                           />
                         ))}
                       </div>
                     )}
                   </div>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>

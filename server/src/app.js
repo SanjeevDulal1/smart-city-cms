@@ -5,32 +5,47 @@ const morgan = require('morgan');
 const path = require('path');
 const { globalLimiter } = require('./middleware/rateLimiter');
 
-const authRoutes = require('./routes/auth');
+const authRoutes      = require('./routes/auth');
 const complaintRoutes = require('./routes/complaints');
-const wardRoutes = require('./routes/wards');
-const adminRoutes = require('./routes/admin');
+const wardRoutes      = require('./routes/wards');
+const adminRoutes     = require('./routes/admin');
 
 const app = express();
 
-app.use(helmet());
-app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+const corsOptions = {
+  origin: true,
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
+// Handle preflight BEFORE helmet
+app.options('/{*path}', cors(corsOptions));
+app.use(cors(corsOptions));
+
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  contentSecurityPolicy: false,
 }));
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(morgan(process.env.NODE_ENV === 'development' ? 'dev' : 'combined'));
 app.use(globalLimiter);
 
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/uploads', express.static('C:/Users/sanje/smart-city-cms/server/uploads'));
 
-app.use('/api/auth', authRoutes);
+app.use('/api/auth',       authRoutes);
 app.use('/api/complaints', complaintRoutes);
-app.use('/api/wards', wardRoutes);
-app.use('/api/admin', adminRoutes);
+app.use('/api/wards',      wardRoutes);
+app.use('/api/admin',      adminRoutes);
 
 app.get('/api/health', (req, res) => {
-  res.json({ success: true, message: 'Smart City CMS API is running', timestamp: new Date() });
+  res.json({
+    success: true,
+    message: 'Smart City CMS API is running',
+    timestamp: new Date(),
+  });
 });
 
 app.use((req, res) => {

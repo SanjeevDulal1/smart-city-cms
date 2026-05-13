@@ -47,7 +47,7 @@ const ReportPage = () => {
   const [otp, setOtp]                 = useState('');
   const [otpSent, setOtpSent]         = useState(false);
   const [loading, setLoading]         = useState(false);
-
+  const [gpsCenter, setGpsCenter] = useState(null);
   // ── Offline support ─────────────────────────────────────────
   const isOnline = useOnlineStatus();
 
@@ -219,33 +219,77 @@ const ReportPage = () => {
           )}
 
           {/* ── Step 1: Location ── */}
-          {step === 1 && (
-            <div className="animate-fade-in">
-              <h2 className="text-lg font-semibold text-gray-900 mb-2">
-                Pin the exact location
-              </h2>
-              <p className="text-sm text-gray-500 mb-4 flex items-center gap-1.5">
-                <MapPin className="w-4 h-4 text-indigo-500" />
-                Click anywhere on the map to place your report pin
-              </p>
-              <div style={{ height: '400px' }} className="rounded-2xl overflow-hidden border border-gray-100">
-                <MapContainer center={[27.7172, 85.3240]} zoom={14}
-                  style={{ height: '100%', width: '100%' }}>
-                  <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                  <LocationPicker onSelect={setLocation} />
-                  {location && (
-                    <Marker position={[location.lat, location.lng]} icon={userPin} />
-                  )}
-                </MapContainer>
-              </div>
-              {location && (
-                <div className="mt-3 p-3 bg-green-50 rounded-xl flex items-center gap-2 text-sm text-green-700">
-                  <CheckCircle className="w-4 h-4 flex-shrink-0" />
-                  Location pinned: {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
-                </div>
-              )}
-            </div>
-          )}
+{step === 1 && (
+  <div className="animate-fade-in">
+    <h2 className="text-lg font-semibold text-gray-900 mb-2">
+      Pin the exact location
+    </h2>
+
+    {/* GPS button */}
+    <button
+      onClick={() => {
+        if (!navigator.geolocation) {
+          toast.error('GPS not supported on this device');
+          return;
+        }
+        toast.loading('Getting your location...', { id: 'gps' });
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const coords = {
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude,
+            };
+            setLocation(coords);
+            setGpsCenter(coords);
+            toast.success('Location found!', { id: 'gps' });
+          },
+          (err) => {
+            toast.error(
+              err.code === 1
+                ? 'Location permission denied. Please tap the map manually.'
+                : 'Could not get location. Tap the map instead.',
+              { id: 'gps' }
+            );
+          },
+          { enableHighAccuracy: true, timeout: 10000 }
+        );
+      }}
+      className="w-full mb-4 flex items-center justify-center gap-2 py-3 bg-indigo-50 hover:bg-indigo-100 border-2 border-indigo-200 hover:border-indigo-400 text-indigo-700 font-semibold rounded-xl transition-all">
+      <span className="text-xl">📍</span>
+      Use my current GPS location
+    </button>
+
+    <p className="text-sm text-gray-500 mb-4 flex items-center gap-1.5 justify-center">
+      <span>— or tap anywhere on the map —</span>
+    </p>
+
+    <div style={{ height: '360px' }} className="rounded-2xl overflow-hidden border border-gray-100">
+      <MapContainer
+        center={gpsCenter ? [gpsCenter.lat, gpsCenter.lng] : [27.7172, 85.3240]}
+        zoom={gpsCenter ? 17 : 14}
+        key={gpsCenter ? `${gpsCenter.lat}-${gpsCenter.lng}` : 'default'}
+        style={{ height: '100%', width: '100%' }}>
+        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        <LocationPicker onSelect={setLocation} />
+        {location && (
+          <Marker position={[location.lat, location.lng]} icon={userPin} />
+        )}
+      </MapContainer>
+    </div>
+
+    {location ? (
+      <div className="mt-3 p-3 bg-green-50 rounded-xl flex items-center gap-2 text-sm text-green-700">
+        <CheckCircle className="w-4 h-4 flex-shrink-0" />
+        Location pinned: {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
+      </div>
+    ) : (
+      <div className="mt-3 p-3 bg-amber-50 rounded-xl flex items-center gap-2 text-sm text-amber-700">
+        <span>👆</span>
+        No location selected yet — tap the GPS button or tap on the map
+      </div>
+    )}
+  </div>
+)}
 
           {/* ── Step 2: Details ── */}
           {step === 2 && (

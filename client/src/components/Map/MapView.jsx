@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -45,10 +46,17 @@ const ClickHandler = ({ onMapClick }) => {
 };
 
 const CATEGORY_EMOJIS = {
-  live_wire:'⚡', gas_leak:'💨', road_collapse:'🛣️',
-  sewage_overflow:'🚰', flood:'🌊', pothole:'🕳️',
-  broken_light:'💡', garbage:'🗑️', broken_footpath:'🚶',
-  noise:'🔊', other:'📌',
+  live_wire:      '⚡',
+  gas_leak:       '💨',
+  road_collapse:  '🛣️',
+  sewage_overflow:'🚰',
+  flood:          '🌊',
+  pothole:        '🕳️',
+  broken_light:   '💡',
+  garbage:        '🗑️',
+  broken_footpath:'🚶',
+  noise:          '🔊',
+  other:          '📌',
 };
 
 const MapView = ({
@@ -80,7 +88,7 @@ const MapView = ({
           position={[selectedLocation.lat, selectedLocation.lng]}
           icon={userPin}>
           <Popup>
-            <div className="text-sm font-medium text-gray-700">
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>
               Your report location
             </div>
           </Popup>
@@ -99,23 +107,46 @@ const MapView = ({
             position={[lat, lng]}
             icon={createColoredPin(pinColor)}>
             <Popup maxWidth={260}>
-              <div className="p-1 min-w-48">
-                <div className="flex items-start gap-2 mb-2">
-                  <span className="text-xl">{emoji}</span>
+              <div style={{ padding: 4, minWidth: 180 }}>
+
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
+                  <span style={{ fontSize: 20 }}>{emoji}</span>
                   <div>
-                    <p className="font-semibold text-gray-900 text-sm">{c.title}</p>
-                    <p className="text-xs text-gray-500">{catInfo.label}</p>
+                    <p style={{ fontWeight: 600, color: '#111827', fontSize: 13, margin: 0 }}>
+                      {c.title}
+                    </p>
+                    <p style={{ fontSize: 11, color: '#6b7280', margin: '2px 0 0' }}>
+                      {catInfo.label}
+                    </p>
                   </div>
                 </div>
-                <div className="flex items-center justify-between">
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                   <StatusBadge status={c.status} size="sm" />
-                  <span className="text-xs text-gray-400">{timeAgo(c.createdAt)}</span>
+                  <span style={{ fontSize: 11, color: '#9ca3af' }}>
+                    {timeAgo(c.createdAt)}
+                  </span>
                 </div>
+
                 {c.priority?.score && (
-                  <div className="mt-2 text-xs text-gray-500">
-                    Priority score: <strong>{c.priority.score}</strong>
-                  </div>
+                  <p style={{ fontSize: 11, color: '#6b7280', marginBottom: 8 }}>
+                    Priority: <strong>{c.priority.score}</strong>
+                  </p>
                 )}
+
+                <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: 8 }}>
+                  <Link
+                    to={`/complaint/${c._id}`}
+                    style={{
+                      fontSize: 12,
+                      color: '#4f46e5',
+                      fontWeight: 600,
+                      textDecoration: 'none',
+                    }}>
+                    View full details →
+                  </Link>
+                </div>
+
               </div>
             </Popup>
           </Marker>

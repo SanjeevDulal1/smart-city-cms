@@ -15,9 +15,14 @@ API.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      const currentPath = window.location.pathname;
+      // Only redirect if NOT already on login page
+      if (currentPath !== '/login' && currentPath !== '/register') {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('admin');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(err);
   }
@@ -45,11 +50,11 @@ export const complaintAPI = {
 };
 
 export const wardAPI = {
-  getAll:    ()       => API.get('/wards'),
-  getStats:  (id)     => API.get(`/wards/${id}/stats`),
-  create:    (data)   => API.post('/wards', data),
-  update:    (id, d)  => API.put(`/wards/${id}`, d),
-  remove:    (id)     => API.delete(`/wards/${id}`),
+  getAll:  ()        => API.get('/wards'),
+  getStats:(id)      => API.get(`/wards/${id}/stats`),
+  create:  (data)    => API.post('/wards', data),
+  update:  (id, d)   => API.put(`/wards/${id}`, d),
+  remove:  (id)      => API.delete(`/wards/${id}`),
 };
 
 export const adminAPI = {

@@ -47,6 +47,21 @@
     transition: all 0.2s;
     cursor: pointer;
   }
+  .btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: #ef4444;
+  color: white;
+  font-weight: 500;
+  padding: 0.625rem 1rem;
+  border-radius: 0.75rem;
+  transition: all 0.2s;
+  cursor: pointer;
+  border: none;
+}
+.btn-danger:hover { background-color: #dc2626; }
   .btn-secondary:hover { background-color: #f9fafb; }
 
   .input-field {
