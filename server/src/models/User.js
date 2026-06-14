@@ -56,8 +56,9 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
 };
 
 userSchema.methods.canSubmitComplaint = function() {
+  if (process.env.NODE_ENV === 'development') return true; // No cooldown in dev
   if (!this.lastComplaintAt) return true;
-  const cooldownHours = parseInt(process.env.COMPLAINT_COOLDOWN_HOURS) || 2;
+  const cooldownHours = parseInt(process.env.COMPLAINT_COOLDOWN_HOURS) || 1;
   const cooldownMs = cooldownHours * 60 * 60 * 1000;
   return Date.now() - this.lastComplaintAt.getTime() > cooldownMs;
 };

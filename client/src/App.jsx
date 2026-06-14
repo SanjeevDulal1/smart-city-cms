@@ -10,6 +10,7 @@ import DashboardPage from './pages/DashboardPage';
 import AdminPage from './pages/AdminPage';
 import ComplaintDetailPage from './pages/ComplaintDetailPage';
 import useAuthStore from './store/authStore';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 
 const ProtectedUser = ({ children }) => {
   const { user, token } = useAuthStore();
@@ -38,6 +39,7 @@ function App() {
         <Route path="/login"         element={<Login />} />
         <Route path="/register"      element={<Register />} />
         <Route path="/complaint/:id" element={<ComplaintDetailPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/report"
           element={
             <ProtectedUser>

@@ -33,8 +33,10 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(morgan(process.env.NODE_ENV === 'development' ? 'dev' : 'combined'));
 app.use(globalLimiter);
 
-app.use('/uploads', express.static('C:/Users/sanje/smart-city-cms/server/uploads'));
+const uploadsPath = path.join(process.cwd(), 'uploads');
+console.log('Uploads path:', uploadsPath);
 
+app.use('/uploads', express.static(uploadsPath));
 app.use('/api/auth',       authRoutes);
 app.use('/api/complaints', complaintRoutes);
 app.use('/api/wards',      wardRoutes);

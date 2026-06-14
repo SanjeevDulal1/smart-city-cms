@@ -90,7 +90,7 @@ const Register = () => {
                 <div className="relative">
                   <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input name="name" value={form.name} onChange={handle}
-                    className="input-field pl-10" placeholder="Sanjeet Sharma" required />
+                    className="input-field pl-10" placeholder="Sanjeet Sharma" autoComplete="off" required />
                 </div>
               </div>
               <div>
@@ -98,7 +98,7 @@ const Register = () => {
                 <div className="relative">
                   <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input name="email" type="email" value={form.email} onChange={handle}
-                    className="input-field pl-10" placeholder="you@example.com" required />
+                    className="input-field pl-10" placeholder="you@example.com" autoComplete="off" required />
                 </div>
               </div>
               <div>
@@ -115,7 +115,7 @@ const Register = () => {
                   <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input name="password" type={showPass ? 'text' : 'password'}
                     value={form.password} onChange={handle}
-                    className="input-field pl-10 pr-10" placeholder="Min. 8 characters" required />
+                    className="input-field pl-10 pr-10" placeholder="Min. 8 characters" autoComplete="off" required />
                   <button type="button" onClick={() => setShowPass(!showPass)}
                     className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                     {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
