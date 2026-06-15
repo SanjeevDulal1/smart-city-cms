@@ -11,6 +11,7 @@ import AdminPage from './pages/AdminPage';
 import ComplaintDetailPage from './pages/ComplaintDetailPage';
 import useAuthStore from './store/authStore';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ProfilePage from './pages/ProfilePage';
 
 const ProtectedUser = ({ children }) => {
   const { user, token } = useAuthStore();
@@ -26,12 +27,16 @@ function App() {
   return (
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Toaster
-        position="top-right"
-        toastOptions={{
-          style: { borderRadius: '12px', fontSize: '14px' },
-          success: { iconTheme: { primary: '#10b981', secondary: '#fff' } },
-        }}
-      />
+  position="bottom-center"
+  toastOptions={{
+    duration: 3000,
+    style: {
+      borderRadius: '12px',
+      fontWeight: '500',
+      fontSize: '14px',
+    },
+  }}
+/>
       <Navbar />
       <OfflineBanner />
       <Routes>
@@ -61,6 +66,7 @@ function App() {
             </ProtectedAdmin>
           }
         />
+        <Route path="/profile" element={<ProtectedUser><ProfilePage /></ProtectedUser>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

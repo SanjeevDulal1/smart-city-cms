@@ -2,11 +2,11 @@ import { create } from 'zustand';
 import { authAPI } from '../services/api';
 
 const useAuthStore = create((set, get) => ({
-  user:      JSON.parse(localStorage.getItem('user'))  || null,
-  admin:     JSON.parse(localStorage.getItem('admin')) || null,
-  token:     localStorage.getItem('token') || null,
-  loading:   false,
-  error:     null,
+  user:    JSON.parse(localStorage.getItem('user'))  || null,
+  admin:   JSON.parse(localStorage.getItem('admin')) || null,
+  token:   localStorage.getItem('token') || null,
+  loading: false,
+  error:   null,
 
   loginUser: async (credentials) => {
     set({ loading: true, error: null });
@@ -42,6 +42,12 @@ const useAuthStore = create((set, get) => ({
     localStorage.clear();
     set({ user: null, admin: null, token: null });
     window.location.href = '/login';
+  },
+
+  // Update user in store and localStorage
+  setUser: (userData) => {
+    localStorage.setItem('user', JSON.stringify(userData));
+    set({ user: userData });
   },
 
   isUser:       () => !!get().user && !!get().token,

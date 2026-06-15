@@ -4,10 +4,7 @@ import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { useDropzone } from 'react-dropzone';
 import toast from 'react-hot-toast';
-import {
-  MapPin, Upload, X, CheckCircle,
-  ChevronRight, ChevronLeft, WifiOff,
-} from 'lucide-react';
+import { Upload, X, CheckCircle, ChevronRight, ChevronLeft, WifiOff } from 'lucide-react';
 import { complaintAPI } from '../services/api';
 import { CATEGORIES } from '../utils/helpers';
 import LoadingSpinner from '../components/UI/LoadingSpinner';
@@ -144,7 +141,8 @@ const ReportPage = () => {
 
   // ── UI ───────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gray-50 pt-20 pb-10">
+    <div className="min-h-screen pt-20 pb-10"
+  style={{ background: 'linear-gradient(180deg, #f0f1ff 0%, #f9fafb 30%)' }}>
       <div className="max-w-2xl mx-auto px-4">
 
         {/* Header */}
@@ -156,24 +154,33 @@ const ReportPage = () => {
         </div>
 
         {/* Step indicator */}
-        <div className="flex items-center mb-8">
-          {STEPS.map((s, i) => (
-            <div key={s} className="flex items-center flex-1">
-              <div className={`flex items-center justify-center w-9 h-9 rounded-full text-sm font-semibold transition-all
-                ${i < step   ? 'bg-green-500 text-white' :
-                  i === step  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' :
-                                'bg-gray-200 text-gray-500'}`}>
-                {i < step ? <CheckCircle className="w-5 h-5" /> : i + 1}
-              </div>
-              <div className="flex-1 mx-2">
-                <p className={`text-xs font-medium ${i === step ? 'text-indigo-600' : 'text-gray-400'}`}>{s}</p>
-                {i < STEPS.length - 1 && (
-                  <div className={`h-0.5 mt-1 rounded-full transition-all ${i < step ? 'bg-green-400' : 'bg-gray-200'}`} />
-                )}
-              </div>
-            </div>
-          ))}
+<div className="flex items-center mb-8">
+  {STEPS.map((s, i) => (
+    <div key={s} className="flex items-center flex-1 last:flex-none">
+      <div className="flex flex-col items-center">
+        <div className={`flex items-center justify-center w-10 h-10 rounded-full text-sm font-bold transition-all duration-300
+          ${i < step
+            ? 'bg-green-500 text-white shadow-md shadow-green-200'
+            : i === step
+            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 scale-110'
+            : 'bg-white text-gray-400 border-2 border-gray-200'}`}>
+          {i < step
+            ? <CheckCircle className="w-5 h-5" />
+            : <span>{i + 1}</span>}
         </div>
+        <p className={`text-xs font-semibold mt-1.5 transition-colors
+          ${i === step ? 'text-indigo-600' : i < step ? 'text-green-600' : 'text-gray-400'}`}>
+          {s}
+        </p>
+      </div>
+      {i < STEPS.length - 1 && (
+        <div className={`flex-1 h-0.5 mx-2 mb-4 rounded-full transition-all duration-500
+          ${i < step ? 'bg-green-400' : 'bg-gray-200'}`}
+        />
+      )}
+    </div>
+  ))}
+</div>
 
         {/* Form card */}
         <div className="card p-6 shadow-sm">
@@ -193,37 +200,69 @@ const ReportPage = () => {
 
           {/* ── Step 0: Category ── */}
           {step === 0 && (
-            <div className="animate-fade-in">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                What type of issue is it?
-              </h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {CATEGORIES.map((cat) => (
-                  <button key={cat.value} onClick={() => setCategory(cat.value)}
-                    className={`p-4 rounded-xl border-2 text-left transition-all duration-200
-                      ${category === cat.value
-                        ? 'border-indigo-500 bg-indigo-50'
-                        : 'border-gray-100 hover:border-gray-300 bg-white'}`}>
-                    <div className="w-8 h-8 rounded-lg mb-2 flex items-center justify-center"
-                      style={{ backgroundColor: cat.color + '20' }}>
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }} />
-                    </div>
-                    <p className={`text-sm font-medium
-                      ${category === cat.value ? 'text-indigo-700' : 'text-gray-700'}`}>
-                      {cat.label}
-                    </p>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          <div className="animate-fade-in">
+            <h2 className="text-lg font-bold text-gray-900 mb-1">
+               What type of issue is it?
+            </h2>
+            <p className="text-sm text-gray-500 mb-5">
+             Select the category that best describes the problem
+    </p>
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      {CATEGORIES.map((cat) => {
+        const emojis = {
+          live_wire:'⚡', gas_leak:'💨', road_collapse:'🛣️',
+          sewage_overflow:'🚰', flood:'🌊', pothole:'🕳️',
+          broken_light:'💡', garbage:'🗑️', broken_footpath:'🚶',
+          noise:'🔊', other:'📌',
+        };
+        const isSelected = category === cat.value;
+        return (
+          <button key={cat.value} onClick={() => setCategory(cat.value)}
+            className={`relative p-4 rounded-2xl border-2 text-left transition-all duration-200 group
+              ${isSelected
+                ? 'border-indigo-500 bg-indigo-50 shadow-md shadow-indigo-100'
+                : 'border-gray-100 hover:border-indigo-200 bg-white hover:shadow-sm'}`}>
 
-          {/* ── Step 1: Location ── */}
+            {/* Selected checkmark */}
+            {isSelected && (
+              <div className="absolute top-2 right-2 w-5 h-5 bg-indigo-600 rounded-full flex items-center justify-center">
+                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            )}
+
+            {/* Icon */}
+            <div className="w-12 h-12 rounded-2xl mb-3 flex items-center justify-center text-2xl transition-transform group-hover:scale-110"
+              style={{ backgroundColor: cat.color + '18' }}>
+              {emojis[cat.value]}
+            </div>
+
+            <p className={`text-sm font-semibold transition-colors
+              ${isSelected ? 'text-indigo-700' : 'text-gray-700'}`}>
+              {cat.label}
+            </p>
+
+            {/* Bottom color bar */}
+            <div className={`absolute bottom-0 left-0 right-0 h-0.5 rounded-b-2xl transition-all duration-200
+              ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'}`}
+              style={{ backgroundColor: cat.color }}
+            />
+          </button>
+        );
+      })}
+    </div>
+  </div>
+)}
+
 {step === 1 && (
   <div className="animate-fade-in">
-    <h2 className="text-lg font-semibold text-gray-900 mb-2">
+    <h2 className="text-lg font-bold text-gray-900 mb-1">
       Pin the exact location
     </h2>
+    <p className="text-sm text-gray-500 mb-4">
+      Use GPS or tap anywhere on the map to place your report pin
+    </p>
 
     {/* GPS button */}
     <button
@@ -235,10 +274,7 @@ const ReportPage = () => {
         toast.loading('Getting your location...', { id: 'gps' });
         navigator.geolocation.getCurrentPosition(
           (pos) => {
-            const coords = {
-              lat: pos.coords.latitude,
-              lng: pos.coords.longitude,
-            };
+            const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
             setLocation(coords);
             setGpsCenter(coords);
             toast.success('Location found!', { id: 'gps' });
@@ -254,16 +290,23 @@ const ReportPage = () => {
           { enableHighAccuracy: true, timeout: 10000 }
         );
       }}
-      className="w-full mb-4 flex items-center justify-center gap-2 py-3 bg-indigo-50 hover:bg-indigo-100 border-2 border-indigo-200 hover:border-indigo-400 text-indigo-700 font-semibold rounded-xl transition-all">
-      <span className="text-xl">📍</span>
+      className="w-full mb-4 flex items-center justify-center gap-3 py-4 rounded-2xl font-semibold text-base transition-all duration-200 border-2 border-indigo-200 bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 hover:from-indigo-100 hover:to-purple-100 hover:border-indigo-400 hover:shadow-md active:scale-98">
+      <span className="text-2xl">📍</span>
       Use my current GPS location
+      <span className="ml-auto bg-indigo-100 text-indigo-600 text-xs font-bold px-2.5 py-1 rounded-full">
+        Recommended
+      </span>
     </button>
 
-    <p className="text-sm text-gray-500 mb-4 flex items-center gap-1.5 justify-center">
-      <span>— or tap anywhere on the map —</span>
-    </p>
+    <div className="flex items-center gap-3 mb-4">
+      <div className="flex-1 h-px bg-gray-200" />
+      <span className="text-xs text-gray-400 font-medium">or tap on the map</span>
+      <div className="flex-1 h-px bg-gray-200" />
+    </div>
 
-    <div style={{ height: '360px' }} className="rounded-2xl overflow-hidden border border-gray-100">
+    {/* Map */}
+    <div className="rounded-2xl overflow-hidden shadow-md border border-gray-100"
+      style={{ height: '380px' }}>
       <MapContainer
         center={gpsCenter ? [gpsCenter.lat, gpsCenter.lng] : [27.7172, 85.3240]}
         zoom={gpsCenter ? 17 : 14}
@@ -277,15 +320,25 @@ const ReportPage = () => {
       </MapContainer>
     </div>
 
+    {/* Status */}
     {location ? (
-      <div className="mt-3 p-3 bg-green-50 rounded-xl flex items-center gap-2 text-sm text-green-700">
-        <CheckCircle className="w-4 h-4 flex-shrink-0" />
-        Location pinned: {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
+      <div className="mt-3 p-3.5 bg-green-50 border border-green-200 rounded-2xl flex items-center gap-3">
+        <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+          <CheckCircle className="w-4 h-4 text-green-600" />
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-green-800">Location pinned!</p>
+          <p className="text-xs text-green-600 font-mono">
+            {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
+          </p>
+        </div>
       </div>
     ) : (
-      <div className="mt-3 p-3 bg-amber-50 rounded-xl flex items-center gap-2 text-sm text-amber-700">
-        <span>👆</span>
-        No location selected yet — tap the GPS button or tap on the map
+      <div className="mt-3 p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-center gap-3">
+        <span className="text-xl flex-shrink-0">👆</span>
+        <p className="text-sm text-amber-700 font-medium">
+          No location selected yet — use GPS or tap on the map above
+        </p>
       </div>
     )}
   </div>
@@ -293,60 +346,148 @@ const ReportPage = () => {
 
           {/* ── Step 2: Details ── */}
           {step === 2 && (
-            <div className="animate-fade-in space-y-5">
-              <h2 className="text-lg font-semibold text-gray-900">Describe the issue</h2>
+  <div className="animate-fade-in space-y-5">
+    <div>
+      <h2 className="text-lg font-bold text-gray-900 mb-1">Describe the issue</h2>
+      <p className="text-sm text-gray-500">
+        The more detail you provide, the faster it gets resolved
+      </p>
+    </div>
 
-              <div>
-                <label className="label">Title</label>
-                <input value={title} onChange={(e) => setTitle(e.target.value)}
-                  className="input-field"
-                  placeholder="e.g. Large pothole near Baneshwor bus stop"
-                  maxLength={100} />
-                <p className="text-xs text-gray-400 mt-1">{title.length}/100</p>
+    {/* Title */}
+    <div>
+      <div className="flex items-center justify-between mb-1.5">
+        <label className="label mb-0">Title</label>
+        <span className={`text-xs font-medium ${title.length > 80 ? 'text-amber-500' : 'text-gray-400'}`}>
+          {title.length}/100
+        </span>
+      </div>
+      <input
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        className="input-field"
+        placeholder="e.g. Large pothole near Baneshwor bus stop"
+        maxLength={100}
+        autoComplete="off"
+      />
+      {title.length > 0 && title.length < 5 && (
+        <p className="text-xs text-red-500 mt-1">Title must be at least 5 characters</p>
+      )}
+    </div>
+
+    {/* Description */}
+    <div>
+      <div className="flex items-center justify-between mb-1.5">
+        <label className="label mb-0">Description</label>
+        <span className={`text-xs font-medium
+          ${description.length === 0 ? 'text-gray-400'
+            : description.length < 20 ? 'text-red-500'
+            : 'text-green-600'}`}>
+          {description.length}/1000
+          {description.length > 0 && description.length < 20 && ' (min 20)'}
+        </span>
+      </div>
+      <textarea
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        className="input-field resize-none"
+        rows={4}
+        placeholder="Describe the issue in detail — nearby landmarks, severity, how long it has been there, any safety concerns..."
+        maxLength={1000}
+        autoComplete="off"
+      />
+      {/* Tips */}
+      {description.length === 0 && (
+        <div className="mt-2 flex gap-2 flex-wrap">
+          {['Near a school/hospital', 'Causing accidents', 'Been here for weeks'].map((tip) => (
+            <button key={tip} type="button"
+              onClick={() => setDescription((prev) => prev + (prev ? ' ' : '') + tip)}
+              className="text-xs bg-gray-100 hover:bg-indigo-50 hover:text-indigo-600 text-gray-500 px-2.5 py-1 rounded-full transition-all border border-gray-200 hover:border-indigo-200">
+              + {tip}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+
+    {/* Photos */}
+    <div>
+      <div className="flex items-center justify-between mb-1.5">
+        <label className="label mb-0">
+          Photos
+          <span className="text-red-500 ml-1">*</span>
+        </label>
+        <span className="text-xs text-gray-400">{photos.length}/3 uploaded</span>
+      </div>
+
+      <div {...getRootProps()}
+        className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-200
+          ${isDragActive
+            ? 'border-indigo-400 bg-indigo-50 scale-101'
+            : photos.length >= 3
+            ? 'border-green-300 bg-green-50'
+            : 'border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/50'}`}>
+        <input {...getInputProps()} />
+
+        {photos.length >= 3 ? (
+          <div className="flex flex-col items-center gap-2">
+            <CheckCircle className="w-10 h-10 text-green-500" />
+            <p className="text-sm font-semibold text-green-700">Maximum photos added</p>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-2">
+            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors
+              ${isDragActive ? 'bg-indigo-100' : 'bg-gray-100'}`}>
+              <Upload className={`w-7 h-7 ${isDragActive ? 'text-indigo-500' : 'text-gray-400'}`} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-700">
+                {isDragActive ? 'Drop your photos here' : 'Upload evidence photos'}
+              </p>
+              <p className="text-xs text-gray-400 mt-0.5">
+                JPEG, PNG, WebP · Max 5MB each · Up to 3 photos
+              </p>
+            </div>
+            <span className="text-xs bg-indigo-100 text-indigo-600 font-semibold px-3 py-1 rounded-full">
+              Browse files
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Photo previews */}
+      {photos.length > 0 && (
+        <div className="flex gap-3 mt-3 flex-wrap">
+          {photos.map((p, i) => (
+            <div key={i} className="relative group">
+              <img
+                src={URL.createObjectURL(p)}
+                alt={`Evidence ${i + 1}`}
+                className="w-24 h-24 object-cover rounded-2xl border-2 border-gray-100 shadow-sm"
+              />
+              <div className="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <button onClick={() => removePhoto(i)}
+                  className="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-
-              <div>
-                <label className="label">Description</label>
-                <textarea value={description} onChange={(e) => setDescription(e.target.value)}
-                  className="input-field resize-none" rows={4}
-                  placeholder="Describe the issue in detail — location landmarks, severity, how long it has been there..."
-                  maxLength={1000} />
-                <p className="text-xs text-gray-400 mt-1">
-                  {description.length}/1000 (min 20 characters)
-                </p>
-              </div>
-
-              <div>
-                <label className="label">Photos (required, max 3)</label>
-                <div {...getRootProps()}
-                  className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all
-                    ${isDragActive
-                      ? 'border-indigo-400 bg-indigo-50'
-                      : 'border-gray-200 hover:border-indigo-300 hover:bg-gray-50'}`}>
-                  <input {...getInputProps()} />
-                  <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500">
-                    {isDragActive ? 'Drop photos here' : 'Drag & drop or click to upload'}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">JPEG, PNG, WebP · Max 5MB each</p>
-                </div>
-                {photos.length > 0 && (
-                  <div className="flex gap-3 mt-3 flex-wrap">
-                    {photos.map((p, i) => (
-                      <div key={i} className="relative group">
-                        <img src={URL.createObjectURL(p)} alt=""
-                          className="w-24 h-24 object-cover rounded-xl border border-gray-100" />
-                        <button onClick={() => removePhoto(i)}
-                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+              <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                <CheckCircle className="w-3 h-3 text-white" />
               </div>
             </div>
+          ))}
+          {photos.length < 3 && (
+            <div {...getRootProps()}
+              className="w-24 h-24 rounded-2xl border-2 border-dashed border-gray-200 hover:border-indigo-300 flex items-center justify-center cursor-pointer transition-all hover:bg-indigo-50">
+              <input {...getInputProps()} />
+              <span className="text-2xl text-gray-300">+</span>
+            </div>
           )}
+        </div>
+      )}
+    </div>
+  </div>
+)}
 
           {/* ── Step 3: OTP Verify ── */}
           {step === 3 && (

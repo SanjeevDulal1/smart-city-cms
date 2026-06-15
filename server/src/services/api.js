@@ -36,6 +36,7 @@ export const authAPI = {
   getMe:         ()     => API.get('/auth/me'),
   forgotPassword:(data) => API.post('/auth/forgot-password', data),
   resetPassword: (data) => API.post('/auth/reset-password', data),
+  updateProfile: (data) => API.put('/auth/profile', data),
 };
 
 export const complaintAPI = {
