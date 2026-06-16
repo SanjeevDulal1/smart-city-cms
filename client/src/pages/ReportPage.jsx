@@ -125,8 +125,19 @@ const ReportPage = () => {
       toast.success('Complaint submitted successfully!');
       navigate('/dashboard');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Submission failed');
-    } finally {
+  const errorCode = err.response?.data?.code;
+  const errorMsg  = err.response?.data?.message;
+
+  if (errorCode === 'OUTSIDE_KMC') {
+    toast.error(
+      '📍 Location is outside Kathmandu! Please pin within KMC boundaries.',
+      { duration: 5000 }
+    );
+    setStep(1); // Go back to location step
+  } else {
+    toast.error(errorMsg || 'Submission failed. Please try again.');
+  }
+} finally {
       setLoading(false);
     }
   };
@@ -257,6 +268,14 @@ const ReportPage = () => {
 
 {step === 1 && (
   <div className="animate-fade-in">
+    {/* KMC boundary notice */}
+<div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-xl mb-3">
+  <span className="text-lg flex-shrink-0">🗺️</span>
+  <p className="text-xs text-blue-700 font-medium">
+    Only accepts complaints within{' '}
+    <strong>Kathmandu Metropolitan City</strong> boundaries.
+  </p>
+</div>
     <h2 className="text-lg font-bold text-gray-900 mb-1">
       Pin the exact location
     </h2>
@@ -274,11 +293,31 @@ const ReportPage = () => {
         toast.loading('Getting your location...', { id: 'gps' });
         navigator.geolocation.getCurrentPosition(
           (pos) => {
-            const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-            setLocation(coords);
-            setGpsCenter(coords);
-            toast.success('Location found!', { id: 'gps' });
-          },
+  const coords = {
+    lat: pos.coords.latitude,
+    lng: pos.coords.longitude,
+  };
+
+  // In development, if outside KMC use Kathmandu center
+  const outsideKMC =
+    coords.lat < 27.62 || coords.lat > 27.81 ||
+    coords.lng < 85.23 || coords.lng > 85.42;
+
+  if (outsideKMC) {
+    const kathmanduCenter = { lat: 27.7172, lng: 85.3240 };
+    setLocation(kathmanduCenter);
+    setGpsCenter(kathmanduCenter);
+    toast.success(
+      '📍 You are outside KMC — using Kathmandu center for testing!',
+      { id: 'gps', duration: 4000 }
+    );
+    return;
+  }
+
+  setLocation(coords);
+  setGpsCenter(coords);
+  toast.success('Location found!', { id: 'gps' });
+},
           (err) => {
             toast.error(
               err.code === 1

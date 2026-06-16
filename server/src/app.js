@@ -9,6 +9,7 @@ const authRoutes      = require('./routes/auth');
 const complaintRoutes = require('./routes/complaints');
 const wardRoutes      = require('./routes/wards');
 const adminRoutes     = require('./routes/admin');
+const settingRoutes = require('./routes/settings');
 
 const app = express();
 
@@ -41,6 +42,7 @@ app.use('/api/auth',       authRoutes);
 app.use('/api/complaints', complaintRoutes);
 app.use('/api/wards',      wardRoutes);
 app.use('/api/admin',      adminRoutes);
+app.use('/api/settings', settingRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({

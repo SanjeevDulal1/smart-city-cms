@@ -62,5 +62,9 @@ export const adminAPI = {
   updateAdmin:     (id, data)  => API.put(`/admin/admins/${id}`, data),
   deleteAdmin:     (id)        => API.delete(`/admin/admins/${id}`),
 };
-
+export const settingsAPI = {
+  getPublic: ()            => API.get('/settings/public'),
+  getAll:    ()            => API.get('/settings'),
+  update:    (key, value)  => API.put('/settings/update', { key, value }),
+};
 export default API;

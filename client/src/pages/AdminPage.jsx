@@ -6,7 +6,7 @@ import {
   ChevronDown, Shield, RefreshCw, Edit2,
   Trash2, X, Save, ToggleLeft, ToggleRight,
 } from 'lucide-react';
-import { adminAPI, wardAPI } from '../services/api';
+import { adminAPI, wardAPI, settingsAPI } from '../services/api';
 import useAuthStore from '../store/authStore';
 import StatusBadge from '../components/UI/StatusBadge';
 import LoadingSpinner from '../components/UI/LoadingSpinner';
@@ -23,12 +23,12 @@ const STATUSES = ['pending','under_review','in_progress','resolved','rejected'];
 // ── Edit Admin Modal ──────────────────────────────────────────
 const EditAdminModal = ({ admin, wards, onClose, onSave }) => {
   const [form, setForm] = useState({
-  name:     admin.name,
-  email:    admin.email,
-  wardId:   admin.ward?._id?.toString() || admin.ward?.toString() || '',
-  isActive: admin.isActive,
-  password: '',
-});
+    name:     admin.name,
+    email:    admin.email,
+    wardId:   admin.ward?._id?.toString() || admin.ward?.toString() || '',
+    isActive: admin.isActive,
+    password: '',
+  });
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
@@ -151,7 +151,7 @@ const EditWardModal = ({ ward, onClose, onSave }) => {
         wardNumber: form.wardNumber,
         isActive:   form.isActive,
         centerCoordinates: {
-          type: 'Point',
+          type:        'Point',
           coordinates: [parseFloat(form.longitude), parseFloat(form.latitude)],
         },
       });
@@ -206,36 +206,37 @@ const EditWardModal = ({ ward, onClose, onSave }) => {
                 className="input-field" />
             </div>
           </div>
-          {/* Boundary info */}
-<div className="p-3 bg-amber-50 rounded-xl border border-amber-200">
-  <p className="text-xs font-semibold text-amber-800 mb-1">
-    📐 Ward boundary
-  </p>
-  <p className="text-xs text-amber-700">
-    {ward.boundary?.coordinates?.length > 0
-      ? '✅ Boundary polygon set — accurate assignment enabled'
-      : '⚠️ No boundary set — using center distance (less accurate)'}
-  </p>
-</div>
 
-{/* Active toggle */}
-<div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-  <div>
-    <p className="font-medium text-gray-900 text-sm">Ward status</p>
-    <p className="text-xs text-gray-500">
-      {form.isActive ? 'Ward accepts complaints' : 'Ward is deactivated'}
-    </p>
-  </div>
-  <button onClick={() => setForm({...form, isActive: !form.isActive})}
-    className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-medium transition-all
-      ${form.isActive
-        ? 'bg-green-100 text-green-700 hover:bg-green-200'
-        : 'bg-red-100 text-red-700 hover:bg-red-200'}`}>
-    {form.isActive
-      ? <><ToggleRight className="w-5 h-5" /> Active</>
-      : <><ToggleLeft  className="w-5 h-5" /> Inactive</>}
-  </button>
-</div>
+          {/* Boundary info */}
+          <div className="p-3 bg-amber-50 rounded-xl border border-amber-200">
+            <p className="text-xs font-semibold text-amber-800 mb-1">
+              📐 Ward boundary
+            </p>
+            <p className="text-xs text-amber-700">
+              {ward.boundary?.coordinates?.length > 0
+                ? '✅ Boundary polygon set — accurate assignment enabled'
+                : '⚠️ No boundary set — using center distance (less accurate)'}
+            </p>
+          </div>
+
+          {/* Active toggle */}
+          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+            <div>
+              <p className="font-medium text-gray-900 text-sm">Ward status</p>
+              <p className="text-xs text-gray-500">
+                {form.isActive ? 'Ward accepts complaints' : 'Ward is deactivated'}
+              </p>
+            </div>
+            <button onClick={() => setForm({...form, isActive: !form.isActive})}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-medium transition-all
+                ${form.isActive
+                  ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                  : 'bg-red-100 text-red-700 hover:bg-red-200'}`}>
+              {form.isActive
+                ? <><ToggleRight className="w-5 h-5" /> Active</>
+                : <><ToggleLeft  className="w-5 h-5" /> Inactive</>}
+            </button>
+          </div>
         </div>
 
         <div className="flex gap-3 p-5 border-t border-gray-100">
@@ -263,14 +264,19 @@ const AdminPage = () => {
   const [wards, setWards]       = useState([]);
   const [admins, setAdmins]     = useState([]);
   const [adminsLoading, setAdminsLoading] = useState(false);
-  const [editingAdmin, setEditingAdmin]   = useState(null);
-  const [editingWard,  setEditingWard]    = useState(null);
+  const [editingAdmin,  setEditingAdmin]  = useState(null);
+  const [editingWard,   setEditingWard]   = useState(null);
   const [deletingAdmin, setDeletingAdmin] = useState(null);
   const [deletingWard,  setDeletingWard]  = useState(null);
   const [wardForm, setWardForm] = useState({ name:'', wardNumber:'', latitude:'', longitude:'' });
   const [newWard,  setNewWard]  = useState({ name:'', wardNumber:'', latitude:'', longitude:'' });
 
-  // ── Data loaders — defined BEFORE useEffects ─────────────────
+  // Demo mode states
+  const [demoMode,       setDemoMode]       = useState(true);
+  const [togglingDemo,   setTogglingDemo]   = useState(false);
+  const [demoModeLoaded, setDemoModeLoaded] = useState(false);
+
+  // ── Data loaders ─────────────────────────────────────────────
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
@@ -298,7 +304,6 @@ const AdminPage = () => {
     } catch { toast.error('Failed to load wards'); }
   }, []);
 
-  // Regular async — NOT useCallback to avoid stale closure
   const loadAdmins = async () => {
     setAdminsLoading(true);
     try {
@@ -308,10 +313,21 @@ const AdminPage = () => {
     finally { setAdminsLoading(false); }
   };
 
-  // ── Effects — defined AFTER all loaders ──────────────────────
+  const loadDemoMode = useCallback(async () => {
+    try {
+      const { data } = await settingsAPI.getAll();
+      setDemoMode(data.settings?.demo_mode ?? true);
+      setDemoModeLoaded(true);
+    } catch {
+      setDemoModeLoaded(true);
+    }
+  }, []);
+
+  // ── Effects ───────────────────────────────────────────────────
 
   useEffect(() => {
     loadDashboard();
+    if (superAdmin) loadDemoMode();
   }, []); // eslint-disable-line
 
   useEffect(() => {
@@ -324,6 +340,25 @@ const AdminPage = () => {
   }, [tab]); // eslint-disable-line
 
   // ── Action handlers ───────────────────────────────────────────
+
+  const toggleDemoMode = async () => {
+    setTogglingDemo(true);
+    try {
+      const newValue = !demoMode;
+      await settingsAPI.update('demo_mode', newValue);
+      setDemoMode(newValue);
+      toast.success(
+        newValue
+          ? '🎮 Demo mode ON — anyone can submit from anywhere'
+          : '🔒 Production mode ON — only KMC complaints accepted',
+        { duration: 4000 }
+      );
+    } catch {
+      toast.error('Failed to update setting');
+    } finally {
+      setTogglingDemo(false);
+    }
+  };
 
   const updateStatus = async (id, status) => {
     setUpdating(id);
@@ -421,11 +456,11 @@ const AdminPage = () => {
 
         {/* ── Dashboard ── */}
         {tab === 'dashboard' && (
-          <div className="animate-fade-in">
+          <div className="animate-fade-in space-y-6">
             {loading
               ? <div className="card p-16 flex justify-center"><LoadingSpinner /></div>
               : (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   {[
                     { label:'Total',       value: stats?.total,      icon: FileText,      color:'bg-blue-50 text-blue-600'     },
                     { label:'Pending',     value: stats?.pending,    icon: Clock,         color:'bg-amber-50 text-amber-600'   },
@@ -444,6 +479,68 @@ const AdminPage = () => {
                   ))}
                 </div>
               )}
+
+            {/* ── Demo Mode Toggle — super admin only ── */}
+            {superAdmin && demoModeLoaded && (
+              <div className={`rounded-2xl p-5 border-2 transition-all duration-300
+                ${demoMode
+                  ? 'bg-amber-50 border-amber-300'
+                  : 'bg-green-50 border-green-300'}`}>
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl
+                      ${demoMode ? 'bg-amber-100' : 'bg-green-100'}`}>
+                      {demoMode ? '🎮' : '🔒'}
+                    </div>
+                    <div>
+                      <p className={`font-bold text-base
+                        ${demoMode ? 'text-amber-800' : 'text-green-800'}`}>
+                        {demoMode ? 'Demo Mode Active' : 'Production Mode Active'}
+                      </p>
+                      <p className={`text-xs mt-0.5
+                        ${demoMode ? 'text-amber-600' : 'text-green-600'}`}>
+                        {demoMode
+                          ? 'Complaints accepted from anywhere — for testing & demo purposes'
+                          : 'Only complaints within Kathmandu Metropolitan City accepted'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={toggleDemoMode}
+                    disabled={togglingDemo}
+                    className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all
+                      ${demoMode
+                        ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-200'
+                        : 'bg-green-500 hover:bg-green-600 text-white shadow-md shadow-green-200'}`}>
+                    {togglingDemo ? (
+                      <span className="flex items-center gap-2">
+                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Switching...
+                      </span>
+                    ) : demoMode ? '🔒 Switch to Production' : '🎮 Switch to Demo'}
+                  </button>
+                </div>
+
+                {/* Status indicators */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4 pt-4 border-t border-black/10">
+                  {[
+                    { label: 'KMC boundary check',    active: !demoMode },
+                    { label: 'Outside KMC blocked',   active: !demoMode },
+                    { label: 'Demo testing allowed',  active: demoMode  },
+                    { label: 'Geofencing active',     active: true      },
+                  ].map((item) => (
+                    <div key={item.label} className="flex items-center gap-1.5 text-xs font-medium">
+                      <span className={`w-2 h-2 rounded-full flex-shrink-0
+                        ${item.active ? 'bg-green-500' : 'bg-gray-300'}`} />
+                      <span className={item.active ? 'text-gray-700' : 'text-gray-400'}>
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -584,7 +681,6 @@ const AdminPage = () => {
           <div className="animate-fade-in space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-              {/* Create form */}
               <div className="card p-6">
                 <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
                   <Users className="w-4 h-4 text-indigo-600" /> Create ward admin
@@ -616,7 +712,6 @@ const AdminPage = () => {
                 </form>
               </div>
 
-              {/* Existing admins */}
               <div className="card p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold text-gray-900 flex items-center gap-2">
@@ -678,7 +773,6 @@ const AdminPage = () => {
               </div>
             </div>
 
-            {/* Full table */}
             {admins.length > 0 && (
               <div className="card p-6">
                 <h3 className="font-semibold text-gray-900 mb-4">All ward admins</h3>

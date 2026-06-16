@@ -1,7 +1,7 @@
 const Complaint = require('../models/Complaint');
 const Ward = require('../models/Ward');
 const User = require('../models/User');
-const { findNearestWard } = require('../services/haversine');
+const { findNearestWard, isWithinKathmandu } = require('../services/haversine');
 const { calculatePriority } = require('../services/priorityEngine');
 const { sendOTP, verifyOTP } = require('../services/emailService');
 
@@ -46,14 +46,23 @@ const submitComplaint = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid coordinates.' });
     }
 
-    // Find nearest ward using new async boundary-based method
-    const ward = await findNearestWard(lat, lng);
-    if (!ward) {
-      return res.status(503).json({
-        success: false,
-        message: 'No wards configured yet. Contact admin.',
-      });
-    }
+    // Check if location is within Kathmandu
+if (!isWithinKathmandu(lat, lng)) {
+  return res.status(400).json({
+    success: false,
+    message: 'This system only accepts complaints within Kathmandu Metropolitan City.',
+    code: 'OUTSIDE_KMC',
+  });
+}
+
+// Find ward using geofencing
+const ward = await findNearestWard(lat, lng);
+if (!ward) {
+  return res.status(503).json({
+    success: false,
+    message: 'Could not assign ward. Please pin location within Kathmandu.',
+  });
+}
 
     console.log(`Complaint assigned to: Ward ${ward.wardNumber} - ${ward.name}`);
 
