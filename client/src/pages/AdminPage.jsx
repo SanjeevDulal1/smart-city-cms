@@ -206,23 +206,36 @@ const EditWardModal = ({ ward, onClose, onSave }) => {
                 className="input-field" />
             </div>
           </div>
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-            <div>
-              <p className="font-medium text-gray-900 text-sm">Ward status</p>
-              <p className="text-xs text-gray-500">
-                {form.isActive ? 'Ward accepts complaints' : 'Ward is deactivated'}
-              </p>
-            </div>
-            <button onClick={() => setForm({...form, isActive: !form.isActive})}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-medium transition-all
-                ${form.isActive
-                  ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                  : 'bg-red-100 text-red-700 hover:bg-red-200'}`}>
-              {form.isActive
-                ? <><ToggleRight className="w-5 h-5" /> Active</>
-                : <><ToggleLeft  className="w-5 h-5" /> Inactive</>}
-            </button>
-          </div>
+          {/* Boundary info */}
+<div className="p-3 bg-amber-50 rounded-xl border border-amber-200">
+  <p className="text-xs font-semibold text-amber-800 mb-1">
+    📐 Ward boundary
+  </p>
+  <p className="text-xs text-amber-700">
+    {ward.boundary?.coordinates?.length > 0
+      ? '✅ Boundary polygon set — accurate assignment enabled'
+      : '⚠️ No boundary set — using center distance (less accurate)'}
+  </p>
+</div>
+
+{/* Active toggle */}
+<div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+  <div>
+    <p className="font-medium text-gray-900 text-sm">Ward status</p>
+    <p className="text-xs text-gray-500">
+      {form.isActive ? 'Ward accepts complaints' : 'Ward is deactivated'}
+    </p>
+  </div>
+  <button onClick={() => setForm({...form, isActive: !form.isActive})}
+    className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-medium transition-all
+      ${form.isActive
+        ? 'bg-green-100 text-green-700 hover:bg-green-200'
+        : 'bg-red-100 text-red-700 hover:bg-red-200'}`}>
+    {form.isActive
+      ? <><ToggleRight className="w-5 h-5" /> Active</>
+      : <><ToggleLeft  className="w-5 h-5" /> Inactive</>}
+  </button>
+</div>
         </div>
 
         <div className="flex gap-3 p-5 border-t border-gray-100">

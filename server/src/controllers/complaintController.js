@@ -4,7 +4,6 @@ const User = require('../models/User');
 const { findNearestWard } = require('../services/haversine');
 const { calculatePriority } = require('../services/priorityEngine');
 const { sendOTP, verifyOTP } = require('../services/emailService');
-const path = require('path');
 
 const requestComplaintOTP = async (req, res) => {
   try {
@@ -26,11 +25,13 @@ const submitComplaint = async (req, res) => {
   try {
     const { title, description, category, latitude, longitude, address, otp } = req.body;
 
+    // Verify OTP
     const valid = await verifyOTP(req.user.email, otp, 'complaint_verification');
     if (!valid) {
       return res.status(400).json({ success: false, message: 'Invalid or expired OTP.' });
     }
 
+    // Check cooldown
     if (!req.user.canSubmitComplaint()) {
       return res.status(429).json({
         success: false,
@@ -38,55 +39,64 @@ const submitComplaint = async (req, res) => {
       });
     }
 
+    // Validate coordinates
     const lat = parseFloat(latitude);
     const lng = parseFloat(longitude);
-
     if (isNaN(lat) || isNaN(lng)) {
       return res.status(400).json({ success: false, message: 'Invalid coordinates.' });
     }
 
-    const wards = await Ward.find({ isActive: true });
-    if (wards.length === 0) {
-      return res.status(503).json({ success: false, message: 'No wards configured yet. Contact admin.' });
+    // Find nearest ward using new async boundary-based method
+    const ward = await findNearestWard(lat, lng);
+    if (!ward) {
+      return res.status(503).json({
+        success: false,
+        message: 'No wards configured yet. Contact admin.',
+      });
     }
 
-    const { ward } = findNearestWard(lat, lng, wards);
+    console.log(`Complaint assigned to: Ward ${ward.wardNumber} - ${ward.name}`);
 
+    // Calculate priority
     const priority = calculatePriority(category, new Date());
 
+    // Process uploaded photos
     const photos = (req.files || []).map((file) => ({
-      url: `/uploads/${file.filename}`,
+      url:      file.path || `/uploads/${file.filename}`,
       filename: file.filename,
     }));
 
+    // Create complaint
     const complaint = await Complaint.create({
-      user: req.user._id,
-      ward: ward._id,
+      user:     req.user._id,
+      ward:     ward._id,
       title,
       description,
       category,
       location: {
-        type: 'Point',
+        type:        'Point',
         coordinates: [lng, lat],
-        address: address || '',
+        address:     address || '',
       },
       photos,
       priority,
       isVerified: true,
       statusHistory: [{
         status: 'pending',
-        note: 'Complaint submitted and verified',
+        note:   'Complaint submitted and verified',
       }],
     });
 
+    // Update user stats
     await User.findByIdAndUpdate(req.user._id, {
       lastComplaintAt: new Date(),
       $inc: { totalComplaints: 1 },
     });
 
+    // Return populated complaint
     const populated = await complaint.populate([
       { path: 'ward', select: 'name wardNumber' },
-      { path: 'user', select: 'name email' },
+      { path: 'user', select: 'name email'      },
     ]);
 
     res.status(201).json({
@@ -95,6 +105,7 @@ const submitComplaint = async (req, res) => {
       complaint: populated,
     });
   } catch (error) {
+    console.error('Submit complaint error:', error.message);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -115,18 +126,29 @@ const getMapComplaints = async (req, res) => {
 
 const getMyComplaints = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
+    const page     = parseInt(req.query.page)  || 1;
+    const limit    = parseInt(req.query.limit) || 10;
+    const skip     = (page - 1) * limit;
+    const { status, category, search } = req.query;
+
+    const filter = { user: req.user._id };
+    if (status)   filter.status   = status;
+    if (category) filter.category = category;
+    if (search) {
+      filter.$or = [
+        { title:       { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+      ];
+    }
 
     const [complaints, total] = await Promise.all([
-      Complaint.find({ user: req.user._id })
+      Complaint.find(filter)
         .populate('ward', 'name wardNumber')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .lean(),
-      Complaint.countDocuments({ user: req.user._id }),
+      Complaint.countDocuments(filter),
     ]);
 
     res.json({
@@ -163,7 +185,7 @@ const upvoteComplaint = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Complaint not found.' });
     }
 
-    const userId = req.user._id;
+    const userId        = req.user._id;
     const alreadyUpvoted = complaint.upvotes.includes(userId);
 
     if (alreadyUpvoted) {
@@ -174,8 +196,8 @@ const upvoteComplaint = async (req, res) => {
 
     await complaint.save();
     res.json({
-      success: true,
-      upvoted: !alreadyUpvoted,
+      success:     true,
+      upvoted:     !alreadyUpvoted,
       upvoteCount: complaint.upvotes.length,
     });
   } catch (error) {

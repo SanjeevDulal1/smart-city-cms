@@ -1,46 +1,51 @@
-const toRad = (degrees) => degrees * (Math.PI / 180);
+const Ward = require('../models/Ward');
 
-/**
- * Calculates the distance in kilometres between two lat/lng points
- * using the Haversine formula.
- */
-const haversineDistance = (lat1, lon1, lat2, lon2) => {
-  const R = 6371;
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-};
+// Find ward by boundary first, fallback to nearest center
+const findNearestWard = async (latitude, longitude) => {
+  try {
+    const point = {
+      type: 'Point',
+      coordinates: [longitude, latitude], // GeoJSON: [lng, lat]
+    };
 
-/**
- * Finds the nearest Ward to a given coordinate pair.
- * @param {number} lat - Report latitude
- * @param {number} lng - Report longitude
- * @param {Array}  wards - Array of Ward documents from MongoDB
- * @returns {{ ward, distanceKm }}
- */
-const findNearestWard = (lat, lng, wards) => {
-  if (!wards || wards.length === 0) {
-    throw new Error('No wards available for assignment');
-  }
+    // Method 1: Check if point falls inside a ward boundary polygon
+    const wardByBoundary = await Ward.findOne({
+      isActive: true,
+      boundary: {
+        $geoIntersects: {
+          $geometry: point,
+        },
+      },
+    });
 
-  let nearest = null;
-  let minDistance = Infinity;
-
-  for (const ward of wards) {
-    const [wardLng, wardLat] = ward.centerCoordinates.coordinates;
-    const distance = haversineDistance(lat, lng, wardLat, wardLng);
-    if (distance < minDistance) {
-      minDistance = distance;
-      nearest = ward;
+    if (wardByBoundary) {
+      console.log(`Ward assigned by boundary: Ward ${wardByBoundary.wardNumber} - ${wardByBoundary.name}`);
+      return wardByBoundary;
     }
-  }
 
-  return { ward: nearest, distanceKm: minDistance.toFixed(2) };
+    // Method 2: Fallback to nearest center if no boundary match
+    // (happens when boundaries aren't set up yet)
+    console.log('No boundary match, falling back to nearest center...');
+    const wardByCenter = await Ward.findOne({
+      isActive: true,
+      centerCoordinates: {
+        $near: {
+          $geometry: point,
+          $maxDistance: 50000, // 50km max
+        },
+      },
+    });
+
+    if (wardByCenter) {
+      console.log(`Ward assigned by center: Ward ${wardByCenter.wardNumber} - ${wardByCenter.name}`);
+      return wardByCenter;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Ward assignment error:', error.message);
+    return null;
+  }
 };
 
-module.exports = { haversineDistance, findNearestWard };
+module.exports = { findNearestWard };
