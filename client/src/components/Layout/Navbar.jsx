@@ -54,15 +54,15 @@ const Navbar = () => {
 
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2.5 group flex-shrink-0">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-all">
-                <MapPin className="w-5 h-5 text-white" />
-              </div>
-              <div className="hidden sm:block">
-                <p className="font-bold text-gray-900 text-sm leading-tight">Smart City</p>
-                <p className="text-xs text-gray-500 leading-tight">Complaint System</p>
-              </div>
-              <p className="font-bold text-gray-900 text-sm sm:hidden">SmartCity</p>
-            </Link>
+  <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-all">
+    <MapPin className="w-5 h-5 text-white" />
+  </div>
+  <div className="hidden sm:block">
+    <p className="font-bold text-gray-900 text-sm leading-tight">Street Care</p>
+    <p className="text-xs text-gray-500 leading-tight">KMC Complaint System</p>
+  </div>
+  <p className="font-bold text-gray-900 text-sm sm:hidden">StreetCare</p>
+</Link>
 
             {/* Desktop Nav links */}
             <div className="hidden md:flex items-center gap-1">

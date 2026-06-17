@@ -21,7 +21,7 @@ const CATEGORY_EMOJIS = {
 
 const StatCard = ({ icon: Icon, label, value, color, bg }) => (
   <div className={`rounded-2xl p-5 flex items-center gap-4 ${bg}`}>
-    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center bg-white/30 flex-shrink-0`}>
+    <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-white/30 flex-shrink-0">
       <Icon className={`w-7 h-7 ${color}`} />
     </div>
     <div>
@@ -57,63 +57,137 @@ const Home = () => {
       {/* ── Hero ── */}
       <div className="relative overflow-hidden bg-gradient-to-br from-indigo-700 via-indigo-600 to-violet-700">
 
-        {/* Background decoration */}
+        {/* Background decorations */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-40 -right-40 w-96 h-96 bg-white/5 rounded-full" />
           <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-white/5 rounded-full" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/3 rounded-full" />
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-6 py-16 sm:py-24">
-          <div className="max-w-3xl">
-            {/* Live badge */}
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-1.5 text-sm text-white/90 mb-8">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-400"></span>
-              </span>
-              Live complaints map — Kathmandu Metropolitan City
-            </div>
+        <div className="relative max-w-7xl mx-auto px-6 py-16 sm:py-20">
+          <div className="grid lg:grid-cols-2 gap-8 items-start">
 
-            <h1 className="text-4xl sm:text-6xl font-extrabold text-white leading-tight mb-6">
-              Report city issues,<br />
-              <span className="text-indigo-200">
-                make Kathmandu better
-              </span>
-            </h1>
+  {/* Left side — Title and buttons */}
+  <div>
+    {/* Live badge */}
+    <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-1.5 text-sm text-white/90 mb-6">
+      <span className="relative flex h-2.5 w-2.5">
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-400"></span>
+      </span>
+      Live street issues map — Kathmandu Metropolitan City
+    </div>
 
-            <p className="text-indigo-100 text-lg sm:text-xl mb-10 max-w-xl leading-relaxed">
-              Join thousands of citizens reporting and tracking city issues in real-time.
-              Together we build a smarter, cleaner Kathmandu.
+    <h1 className="text-4xl sm:text-5xl font-extrabold text-white leading-tight mb-4">
+      Report street issues,<br />
+      <span className="text-indigo-200">fix Kathmandu together</span>
+    </h1>
+
+    <p className="text-indigo-100 text-lg mb-8 leading-relaxed">
+      Street Care is an official street infrastructure complaint portal
+      for Kathmandu Metropolitan City. Report issues directly to your ward office.
+    </p>
+
+    {/* CTA buttons */}
+    {isUser() ? (
+      <div className="flex items-center gap-4 flex-wrap">
+        <Link to="/report"
+          className="inline-flex items-center gap-2 bg-white text-indigo-700 font-bold px-8 py-4 rounded-2xl hover:bg-indigo-50 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-0.5 text-base">
+          <FileText className="w-5 h-5" />
+          Report an issue
+          <ArrowRight className="w-4 h-4" />
+        </Link>
+        <Link to="/dashboard"
+          className="inline-flex items-center gap-2 bg-white/10 text-white font-semibold px-6 py-4 rounded-2xl hover:bg-white/20 transition-all border border-white/20 text-base">
+          My reports
+        </Link>
+      </div>
+    ) : (
+      <div className="flex items-center gap-4 flex-wrap">
+        <Link to="/register"
+          className="inline-flex items-center gap-2 bg-white text-indigo-700 font-bold px-8 py-4 rounded-2xl hover:bg-indigo-50 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-0.5 text-base">
+          Get started free
+          <ArrowRight className="w-4 h-4" />
+        </Link>
+        <Link to="/login"
+          className="inline-flex items-center gap-2 bg-white/10 text-white font-semibold px-6 py-4 rounded-2xl hover:bg-white/20 transition-all border border-white/20 text-base">
+          Sign in
+        </Link>
+      </div>
+    )}
+  </div>
+
+  {/* Right side — Warning/Disclaimer box */}
+  <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-5">
+    <div className="flex items-center gap-2 mb-4">
+      <span className="text-2xl">⚠️</span>
+      <p className="font-bold text-white text-base">
+        Important — Please read before reporting
+      </p>
+    </div>
+
+    <div className="space-y-4">
+      {/* Accepted */}
+      <div>
+        <p className="text-green-300 text-xs font-bold mb-2 flex items-center gap-1">
+          <span className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center text-white text-xs">✓</span>
+          Accepted street issues:
+        </p>
+        <div className="space-y-1.5">
+          {[
+            '🛣️ Roads, potholes, road collapse',
+            '💡 Streetlights, live wires, electrical',
+            '🚰 Sewage overflow, flooding, drainage',
+            
+          ].map((item) => (
+            <p key={item} className="text-white/80 text-xs flex items-center gap-2">
+              <span className="w-1 h-1 bg-green-400 rounded-full flex-shrink-0" />
+              {item}
             </p>
+          ))}
+        </div>
+      </div>
 
-            {isUser() ? (
-              <div className="flex items-center gap-4 flex-wrap">
-                <Link to="/report"
-                  className="inline-flex items-center gap-2 bg-white text-indigo-700 font-bold px-8 py-4 rounded-2xl hover:bg-indigo-50 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-0.5 text-base">
-                  <FileText className="w-5 h-5" />
-                  Report an issue
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-                <Link to="/dashboard"
-                  className="inline-flex items-center gap-2 bg-white/10 text-white font-semibold px-6 py-4 rounded-2xl hover:bg-white/20 transition-all border border-white/20 text-base">
-                  My reports
-                </Link>
-              </div>
-            ) : (
-              <div className="flex items-center gap-4 flex-wrap">
-                <Link to="/register"
-                  className="inline-flex items-center gap-2 bg-white text-indigo-700 font-bold px-8 py-4 rounded-2xl hover:bg-indigo-50 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-0.5 text-base">
-                  Get started free
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-                <Link to="/login"
-                  className="inline-flex items-center gap-2 bg-white/10 text-white font-semibold px-6 py-4 rounded-2xl hover:bg-white/20 transition-all border border-white/20 text-base">
-                  Sign in
-                </Link>
-              </div>
-            )}
-          </div>
+      {/* Divider */}
+      <div className="border-t border-white/20" />
+
+      {/* Not accepted */}
+      <div>
+        <p className="text-red-300 text-xs font-bold mb-2 flex items-center gap-1">
+          <span className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center text-white text-xs">✕</span>
+          NOT accepted — use these instead:
+        </p>
+        <div className="space-y-1.5">
+          {[
+            { text: 'Police / crime issues', number: '100', icon: '👮' },
+            { text: 'Medical emergencies',   number: '102', icon: '🚑' },
+            { text: 'Fire emergencies',      number: '101', icon: '🚒' },
+          ].map((item) => (
+            <div key={item.text}
+              className="flex items-center justify-between bg-white/10 rounded-xl px-3 py-2">
+              <p className="text-white/70 text-xs">
+                {item.icon} {item.text}
+              </p>
+              <span className="font-bold text-red-300 text-sm">
+                📞 {item.number}
+              </span>
+            </div>
+          ))}
+          <p className="text-white/60 text-xs flex items-center gap-2 mt-1">
+            <span className="w-1 h-1 bg-red-400 rounded-full flex-shrink-0" />
+            Outside KMC boundaries — not accepted
+            <p className="text-white/60 text-xs flex items-center gap-2">
+            <span className="w-1 h-1 bg-red-400 rounded-full flex-shrink-0" />
+            Personal / social disputes — not accepted
+          </p>
+          </p>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
         </div>
 
         {/* Wave bottom */}
@@ -125,7 +199,7 @@ const Home = () => {
       </div>
 
       {/* ── Stats row ── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 -mt-2 mb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 -mt-2 mb-6">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <StatCard icon={TrendingUp}    label="Total reports" value={stats.total}
             color="text-blue-700"   bg="bg-blue-50 border border-blue-100" />
@@ -135,6 +209,71 @@ const Home = () => {
             color="text-indigo-700" bg="bg-indigo-50 border border-indigo-100" />
           <StatCard icon={CheckCircle}   label="Resolved"      value={stats.resolved}
             color="text-green-700"  bg="bg-green-50 border border-green-100" />
+        </div>
+      </div>
+
+      {/* ── Info cards ── */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[
+            {
+              icon:       '🏛️',
+              title:      'Official KMC Portal',
+              desc:       'Directly connected to all 32 ward offices of Kathmandu Metropolitan City',
+              color:      'bg-blue-50 border-blue-100',
+              titleColor: 'text-blue-800',
+              descColor:  'text-blue-600',
+            },
+            {
+              icon:       '🛣️',
+              title:      'Street Issues Only',
+              desc:       'For roads, utilities, sewage, lights and other physical infrastructure problems only',
+              color:      'bg-indigo-50 border-indigo-100',
+              titleColor: 'text-indigo-800',
+              descColor:  'text-indigo-600',
+            },
+            {
+              icon:       '📍',
+              title:      'KMC Boundaries Only',
+              desc:       'Only accepts complaints from within Kathmandu Metropolitan City boundaries',
+              color:      'bg-amber-50 border-amber-100',
+              titleColor: 'text-amber-800',
+              descColor:  'text-amber-600',
+            },
+          ].map((card) => (
+            <div key={card.title}
+              className={`rounded-2xl p-4 border ${card.color} flex items-start gap-3`}>
+              <span className="text-2xl flex-shrink-0">{card.icon}</span>
+              <div>
+                <p className={`font-bold text-sm ${card.titleColor}`}>{card.title}</p>
+                <p className={`text-xs mt-0.5 leading-relaxed ${card.descColor}`}>{card.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Emergency numbers ── */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 mb-8">
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
+          <p className="font-bold text-red-800 text-sm mb-3 flex items-center gap-2">
+            🚨 Emergency Numbers — Do NOT use Street Care for emergencies
+          </p>
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { label: 'Police',    number: '100', icon: '👮', desc: 'Crime & Security' },
+              { label: 'Ambulance', number: '102', icon: '🚑', desc: 'Medical Emergency' },
+              { label: 'Fire',      number: '101', icon: '🚒', desc: 'Fire Emergency'   },
+            ].map((e) => (
+              <div key={e.label}
+                className="bg-white rounded-xl p-3 text-center border border-red-100 hover:shadow-sm transition-all">
+                <p className="text-2xl mb-1">{e.icon}</p>
+                <p className="font-extrabold text-red-700 text-2xl">{e.number}</p>
+                <p className="text-xs font-semibold text-red-600">{e.label}</p>
+                <p className="text-xs text-red-400 mt-0.5">{e.desc}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -162,17 +301,17 @@ const Home = () => {
             <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-4 sm:p-5">
               <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
                 <div>
-                  <h2 className="font-bold text-gray-900 text-lg">Live complaint map</h2>
+                  <h2 className="font-bold text-gray-900 text-lg">Live street issue map</h2>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    Click any pin to see complaint details
+                    Click any pin to see issue details
                   </p>
                 </div>
                 <div className="flex gap-1.5 flex-wrap">
                   {[
-                    { key: 'all',         label: 'All'        },
-                    { key: 'pending',     label: 'Pending'    },
-                    { key: 'in_progress', label: 'Active'     },
-                    { key: 'resolved',    label: 'Resolved'   },
+                    { key: 'all',         label: 'All'      },
+                    { key: 'pending',     label: 'Pending'  },
+                    { key: 'in_progress', label: 'Active'   },
+                    { key: 'resolved',    label: 'Resolved' },
                   ].map(({ key, label }) => (
                     <button key={key} onClick={() => setFilter(key)}
                       className={`px-3 py-1.5 text-xs font-semibold rounded-xl transition-all
@@ -215,9 +354,7 @@ const Home = () => {
             <div className="flex items-center justify-between">
               <h2 className="font-bold text-gray-900 text-lg">Recent reports</h2>
               {mapComplaints.length > 0 && (
-                <span className="text-xs text-gray-400">
-                  {mapComplaints.length} total
-                </span>
+                <span className="text-xs text-gray-400">{mapComplaints.length} total</span>
               )}
             </div>
 
@@ -230,8 +367,8 @@ const Home = () => {
 
               {!loading && mapComplaints.length === 0 && (
                 <div className="bg-white rounded-2xl p-10 text-center border border-gray-100">
-                  <p className="text-4xl mb-3">🗺️</p>
-                  <p className="text-gray-500 text-sm font-medium">No complaints yet</p>
+                  <p className="text-4xl mb-3">🛣️</p>
+                  <p className="text-gray-500 text-sm font-medium">No street issues reported yet</p>
                   <p className="text-gray-400 text-xs mt-1">Be the first to report an issue!</p>
                   {!isUser() && (
                     <Link to="/register"
@@ -271,9 +408,9 @@ const Home = () => {
             {/* CTA for non-logged in users */}
             {!isUser() && mapComplaints.length > 0 && (
               <div className="bg-gradient-to-br from-indigo-600 to-violet-600 rounded-2xl p-5 text-white">
-                <p className="font-bold text-base mb-1">See an issue in your area?</p>
+                <p className="font-bold text-base mb-1">See a street issue nearby?</p>
                 <p className="text-indigo-100 text-xs mb-4">
-                  Create a free account and report it in under 2 minutes.
+                  Create a free account and report it to your ward office in under 2 minutes.
                 </p>
                 <Link to="/register"
                   className="inline-flex items-center gap-1.5 bg-white text-indigo-700 font-bold text-sm px-4 py-2 rounded-xl hover:bg-indigo-50 transition-all">

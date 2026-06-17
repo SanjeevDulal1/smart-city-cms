@@ -1,7 +1,7 @@
 {
-  "short_name": "SmartCity",
-  "name": "Smart City Complaint Management System",
-  "description": "Report and track city issues in Kathmandu",
+  "short_name": "StreetCare",
+  "name": "Street Care — A Street Complaint Management System",
+  "description": "Report and track street infrastructure issues in Kathmandu Metropolitan City",
   "icons": [
     {
       "src": "favicon.ico",
@@ -32,14 +32,14 @@
       "sizes": "512x512",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "Smart City CMS Home"
+      "label": "Street Care Home"
     },
     {
       "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Smart City CMS Mobile"
+      "label": "Street Care Mobile"
     }
   ],
   "start_url": "/",
@@ -49,5 +49,5 @@
   "theme_color": "#4f46e5",
   "background_color": "#4f46e5",
   "categories": ["utilities", "government"],
-  "id": "smart-city-cms"
+  "id": "street-care-kmc"
 }
