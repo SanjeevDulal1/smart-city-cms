@@ -18,9 +18,10 @@ const Login = () => {
   };
 
   const submit = async (e) => {
-    e.preventDefault();
-    setError('');
-    const fn = isAdmin ? loginAdmin : loginUser;
+  e.preventDefault();
+  setError('');
+  const fn = isAdmin ? loginAdmin : loginUser;
+  try {
     const res = await fn(form);
     if (res.success) {
       toast.success('Welcome back!');
@@ -28,7 +29,11 @@ const Login = () => {
     } else {
       setError(res.message || 'Invalid email or password');
     }
-  };
+  } catch (err) {
+    // Safety net — catches any unexpected throw
+    setError('Something went wrong. Please try again.');
+  }
+}
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
